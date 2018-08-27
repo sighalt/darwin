@@ -32,4 +32,4 @@ env = Environment(fitness, mutator)
 first_individual = Genome(genes=[Gene()])
 population = [first_individual]
 
-env.evolve(population, verbose=True, n_generations=10, population_size=100)
+env.evolve(population, n_generations=10, population_size=101)
