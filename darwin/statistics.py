@@ -52,4 +52,4 @@ class HallOfFame(object):
         """Save best individuals for the given population"""
         sorted_pop = sorted(population, key=self.fitness_function, reverse=True)
         hall_of_fame = sorted_pop[:self.n_best]
-        self.history.append(hall_of_fame)
+        self.history.append([deepcopy(genome) for genome in hall_of_fame])
