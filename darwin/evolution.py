@@ -48,6 +48,13 @@ class Environment(object):
     def mean_fitness(self, population):
         return mean(list(map(self.fitness_function, population)))
 
+    def execute_callbacks(self, population, callbacks):
+        if callbacks and callable(callbacks):
+            callbacks(population)
+        elif callbacks:
+            for callback in callbacks:
+                callback(population)
+
     def evolve(self, population, keep_ratio=.2, n_generations=1,
                population_size=100, generation_callback=None, copy=True):
         """
@@ -66,12 +73,7 @@ class Environment(object):
             population = [self.copy_fn(genome) for genome in population]
 
         population = self.upsize_population(population, population_size)
-
-        if generation_callback and callable(generation_callback):
-            generation_callback(population)
-        elif generation_callback:
-            for callback in generation_callback:
-                callback(population)
+        self.execute_callbacks(population, generation_callback)
 
         msg = "Start: Mean fitness of top {:.2f} percent: {:f}"
         msg = msg.format(keep_ratio * 100, self.mean_fitness(population))
@@ -88,10 +90,6 @@ class Environment(object):
                              self.mean_fitness(population))
             logger.info(msg)
 
-            if generation_callback and callable(generation_callback):
-                generation_callback(population)
-            elif generation_callback:
-                for callback in generation_callback:
-                    callback(population)
+            self.execute_callbacks(population, generation_callback)
 
         return population
