@@ -1,14 +1,38 @@
 import random
 import logging
 from copy import deepcopy
+from functools import wraps
 from statistics import mean
+
+from darwin.exceptions import MaxFitnessReached
 
 logger = logging.getLogger(__name__)
 
 
+def stop_on_fitness_wrapper(stop_on_fitness):
+    """Decorate fitness function and raise MaxFitnessReached when
+    `stop_on_fitness` was reached"""
+
+    def decorator(fn):
+
+        @wraps(fn)
+        def fitness_wrapper(genome, *args, **kwargs):
+            result = fn(genome, *args, **kwargs)
+
+            if result >= stop_on_fitness:
+                raise MaxFitnessReached(genome, stop_on_fitness)
+
+            return result
+
+        return fitness_wrapper
+
+    return decorator
+
+
 class Environment(object):
 
-    def __init__(self, fitness_function, mutator, copy_fn=deepcopy):
+    def __init__(self, fitness_function, mutator, stop_on_fitness=None,
+                 copy_fn=deepcopy):
         """
         :param fitness_function: callable taking a genome object and returning a
         float value indicating the individuals fitness (greater values mean
@@ -16,6 +40,10 @@ class Environment(object):
         :param mutator: a mutator object
         :param copy_fn: a copy function for creating new objects
         """
+        if stop_on_fitness:
+            decorator = stop_on_fitness_wrapper(stop_on_fitness)
+            fitness_function = decorator(fitness_function)
+
         self.fitness_function = fitness_function
         self.mutator = mutator
         self.copy_fn = copy_fn
