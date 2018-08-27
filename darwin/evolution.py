@@ -49,7 +49,7 @@ class Environment(object):
         return mean(list(map(self.fitness_function, population)))
 
     def evolve(self, population, keep_ratio=.2, n_generations=1,
-               population_size=100, generation_callback=None):
+               population_size=100, generation_callback=None, copy=True):
         """
 
         :param population:
@@ -58,9 +58,13 @@ class Environment(object):
         :param population_size:
         :param generation_callback: a callback or a list of callbacks taking the
         population
-        :param verbose:
+        :param copy: ensure the given population is copied and not altered
+        in-place
         :return:
         """
+        if copy:
+            population = [self.copy_fn(genome) for genome in population]
+
         population = self.upsize_population(population, population_size)
 
         if generation_callback and callable(generation_callback):
