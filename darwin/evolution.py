@@ -49,7 +49,7 @@ class Environment(object):
         return mean(list(map(self.fitness_function, population)))
 
     def evolve(self, population, keep_ratio=.2, n_generations=1,
-               population_size=100, generation_callback=None, verbose=False):
+               population_size=100, generation_callback=None):
         """
 
         :param population:
@@ -79,11 +79,10 @@ class Environment(object):
 
             self.mutator(population)
 
-            if verbose:
-                msg = "Gen #{:d}: Mean fitness of top {:.2f} %: {:f}"
-                msg = msg.format(generation, keep_ratio * 100,
-                                 self.mean_fitness(population))
-                logger.info(msg)
+            msg = "Gen #{:d}: Mean fitness of top {:.2f} %: {:f}"
+            msg = msg.format(generation, keep_ratio * 100,
+                             self.mean_fitness(population))
+            logger.info(msg)
 
             if generation_callback and callable(generation_callback):
                 generation_callback(population)
