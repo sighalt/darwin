@@ -51,6 +51,6 @@ class MetaMutator(BaseMutator):
 
         for mutator, probability in self.mutators.items():
             sub_pop_size = int(pop_size*probability)
-            sub_pop = population[start:sub_pop_size]
+            sub_pop = population[start:start+sub_pop_size]
             mutator(sub_pop)
             start += sub_pop_size
