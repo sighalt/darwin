@@ -1,12 +1,12 @@
 import random
 from darwin import Environment
-from darwin.mutators import SimpleGeneMutator
-
+from darwin.mutators import MetaMutator, SimpleGeneMutator, SimpleCombiner
+from typing import List
 
 class Gene(object):
 
-    def __init__(self):
-        self.value = 0
+    def __init__(self, value=0):
+        self.value = value
 
 
 class Genome(object):
@@ -19,6 +19,17 @@ def mutate_gene(gene):
     gene.value += random.random() - .5
 
 
+def combine_genes(parents: List[Genome]) -> Genome:
+    """Combine new Genome, with all its genes to be the sum of its parent genes"""
+
+    child_genes = []
+
+    for genes in zip(*[parent.genes for parent in parents]):
+        child_genes.append(Gene(sum(gene.value for gene in genes)))
+
+    return Genome(child_genes)
+
+
 def fitness(genome):
     return sum(
         gene.value
@@ -27,7 +38,12 @@ def fitness(genome):
     )
 
 
-mutator = SimpleGeneMutator(gene_mutations=[mutate_gene])
+# combine 40% and mutate 50% of the population
+mutator = MetaMutator({
+    SimpleCombiner(combine_genes): 0.4,
+    SimpleGeneMutator([mutate_gene]): 0.5
+})
+
 env = Environment(fitness, mutator)
 first_individual = Genome(genes=[Gene()])
 population = [first_individual]
