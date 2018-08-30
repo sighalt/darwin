@@ -5,6 +5,7 @@ ability to perform better on a fitness function.
 """
 import random
 from darwin.abc import BaseMutator
+from darwin.utils import HistoryList
 
 
 class SimpleGeneMutator(BaseMutator):
@@ -48,9 +49,15 @@ class MetaMutator(BaseMutator):
         random.shuffle(population)
         pop_size = len(population)
         start = 0
+        history_lists = []
 
         for mutator, probability in self.mutators.items():
             sub_pop_size = int(pop_size*probability)
-            sub_pop = population[start:start+sub_pop_size]
+            sub_pop = HistoryList(population[start:start+sub_pop_size])
+            history_lists.append(sub_pop)
+
             mutator(sub_pop)
             start += sub_pop_size
+
+        for history_list in history_lists:
+            history_list.apply_changes(population)
