@@ -48,18 +48,16 @@ class Environment(object):
         self.mutator = mutator
         self.copy_fn = copy_fn
 
-    def remove_unfit(self, population, keep_ratio=.2):
+    def remove_unfit(self, population, keep):
         """Return a new population containing the fittest `keep_ratio` of the given
         population.
 
         Even though the population is a new iterable, the individuals are the same
         objects as in `population`.
         """
-        pop_size = len(population)
-        keep_size = int(pop_size * keep_ratio)
         population = sorted(population, key=self.fitness_function, reverse=True)
 
-        return population[:keep_size]
+        return population[:keep]
 
     def upsize_population(self, population, n=100):
         """Return a new population of size `n` based on the individuals in
@@ -108,7 +106,8 @@ class Environment(object):
         logger.info(msg)
 
         for generation in range(n_generations):
-            population = self.remove_unfit(population, keep_ratio)
+            keep_n_fittest = int(keep_ratio * population_size) or 1
+            population = self.remove_unfit(population, keep=keep_n_fittest)
             population = self.upsize_population(population, population_size)
 
             self.mutator(population)
