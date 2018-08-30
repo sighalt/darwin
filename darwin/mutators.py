@@ -4,7 +4,7 @@ Mutators are objects changing a given population so the resulting heir has the
 ability to perform better on a fitness function.
 """
 import random
-from darwin.abc import BaseMutator
+from darwin.abc import BaseMutator, BaseCombiner
 from darwin.utils import HistoryList
 
 
@@ -61,3 +61,14 @@ class MetaMutator(BaseMutator):
 
         for history_list in history_lists:
             history_list.apply_changes(population)
+
+
+class SimpleCombiner(BaseCombiner):
+    def __init__(self, combiner, keep_parents=False, n_parents=2):
+        self.KEEP_PARENTS = keep_parents
+        self.N_PARENTS = n_parents
+
+        self.combiner = combiner
+
+    def combine(self, parents):
+        return self.combiner(parents)
