@@ -21,7 +21,7 @@ class BaseCombiner(BaseMutator):
         for parents in itertools.combinations(population, self.N_PARENTS):
             children = self.combine(parents)
 
-            if not isinstance(children, (collections.Iterable)):
+            if not isinstance(children, collections.Iterable):
                 children = [children]
 
             combined_children.extend(children)
