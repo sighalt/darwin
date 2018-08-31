@@ -1,7 +1,7 @@
 import time
 import random
 from darwin import Environment
-from darwin.mutators import SimpleGeneMutator
+from darwin.mutators import SimpleMutator
 
 
 class Gene(object):
@@ -16,7 +16,8 @@ class Genome(object):
         self.genes = list([] or genes)
 
 
-def mutate_gene(gene):
+def mutate_genome(genome):
+    gene = random.choice(genome.genes)
     gene.value += random.random() - .5
 
 
@@ -33,7 +34,7 @@ def optimized_copy(obj):
     return Genome([Gene(gene.value) for gene in obj.genes])
 
 
-mutator = SimpleGeneMutator(gene_mutations=[mutate_gene])
+mutator = SimpleMutator(mutate_genome)
 env = Environment(fitness, mutator, n_jobs=-1, copy_fn=optimized_copy)
 first_individual = Genome(genes=[Gene()])
 population = [first_individual]

@@ -1,7 +1,8 @@
 import random
 from darwin import Environment
-from darwin.mutators import MetaMutator, SimpleGeneMutator, SimpleCombiner
+from darwin.mutators import RandomChunkStrategy, SimpleMutator, SimpleCombiner
 from typing import List
+
 
 class Gene(object):
 
@@ -15,12 +16,14 @@ class Genome(object):
         self.genes = list([] or genes)
 
 
-def mutate_gene(gene):
+def mutate_gene(genome):
+    gene = random.choice(genome.genes)
     gene.value += random.random() - .5
 
 
 def combine_genes(parents: List[Genome]) -> Genome:
-    """Combine new Genome, with all its genes to be the sum of its parent genes"""
+    """Combine new Genome, with all its genes to be the sum of its parent
+    genes"""
 
     child_genes = []
 
@@ -39,9 +42,9 @@ def fitness(genome):
 
 
 # combine 40% and mutate 50% of the population
-mutator = MetaMutator({
+mutator = RandomChunkStrategy({
     SimpleCombiner(combine_genes): 0.4,
-    SimpleGeneMutator([mutate_gene]): 0.5
+    SimpleMutator(mutate_gene): 0.5
 })
 
 env = Environment(fitness, mutator)

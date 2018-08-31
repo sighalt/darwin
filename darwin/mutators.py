@@ -8,35 +8,20 @@ from darwin.abc import BaseMutator, BaseCombiner
 from darwin.utils import HistoryList
 
 
-class SimpleGeneMutator(BaseMutator):
-    """Mutator"""
+class SimpleMutator(BaseMutator):
 
-    def __init__(self, gene_mutations, p_mutation=.5, n_mutating_genes=1):
+    def __init__(self, individual_mutator):
         """
-
-        :param gene_mutations: a collection of callbacks mutating a given gene
-        :param p_mutation: the probability of a genome getting mutated
-        :param n_mutating_genes: number of genes getting mutated
+        :param individual_mutator: callable mutating an individual
         """
-        self.gene_mutations = gene_mutations
-        self.p_mutation = p_mutation
-        self.n_mutating_genes = n_mutating_genes
-
-    def _mutate_gene(self, gene):
-        mutation = random.choice(self.gene_mutations)
-        mutation(gene)
-
-    def _mutate_genome(self, genome):
-        for gene in random.choices(genome.genes, k=self.n_mutating_genes):
-            self._mutate_gene(gene)
+        self.individual_mutator = individual_mutator
 
     def __call__(self, population):
-        for genome in population:
-            if random.random() <= self.p_mutation:
-                self._mutate_genome(genome)
+        for individual in population:
+            self.individual_mutator(individual)
 
 
-class MetaMutator(BaseMutator):
+class RandomChunkStrategy(BaseMutator):
 
     def __init__(self, mutators):
         """
