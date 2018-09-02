@@ -3,6 +3,8 @@ from darwin import Environment
 from darwin.mutators import RandomChunkStrategy, SimpleMutator, SimpleCombiner
 from typing import List
 
+from darwin.selection import TournamentSelection
+
 
 class Gene(object):
 
@@ -47,7 +49,7 @@ mutator = RandomChunkStrategy({
     SimpleMutator(mutate_gene): 0.5
 })
 
-env = Environment(fitness, mutator)
+env = Environment(fitness, mutator, selection_strategy=TournamentSelection(25))
 first_individual = Genome(genes=[Gene()])
 population = [first_individual]
 
