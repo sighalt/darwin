@@ -22,9 +22,9 @@ class PerformanceHistory(object):
         """Reset history"""
         self.history = []
 
-    def __call__(self, population):
+    def __call__(self, evaluated_population):
         """Save aggregated performance function in history."""
-        fitnesses = list(map(self.fitness_function, population))
+        fitnesses = [fitness for _, fitness in evaluated_population]
         aggregated = self.aggregator(fitnesses)
         self.history.append(aggregated)
 
@@ -33,10 +33,11 @@ class HallOfFame(object):
     """History of n-best individuals of each generation.
     """
 
-    def __init__(self, fitness_function, n_best=1):
+    def __init__(self, fitness_function=None, n_best=1):
         """Initilizer
 
         :param fitness_function: callback taking a genome and returning a float
+        when None is given the already evaluated fitness is used
         :param n_best: Number of individuals which should be saved for each
         generation
         """
@@ -48,8 +49,17 @@ class HallOfFame(object):
         """Reset history"""
         self.history = []
 
-    def __call__(self, population):
+    def __call__(self, evaluated_population):
         """Save best individuals for the given population"""
-        sorted_pop = sorted(population, key=self.fitness_function, reverse=True)
+        if self.fitness_function is None:
+            sorted_pop = sorted(evaluated_population,
+                                key=lambda x: x[1],
+                                reverse=True)
+            sorted_pop = [individual for individual, _ in sorted_pop]
+        else:
+            population = [individual for individual, _ in evaluated_population]
+            sorted_pop = sorted(population, key=self.fitness_function,
+                                reverse=True)
+
         hall_of_fame = sorted_pop[:self.n_best]
         self.history.append([deepcopy(genome) for genome in hall_of_fame])

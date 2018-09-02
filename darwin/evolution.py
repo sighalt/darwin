@@ -4,10 +4,16 @@ from copy import deepcopy
 from functools import wraps
 import multiprocessing
 from statistics import mean
+from collections import namedtuple
+from warnings import warn
 
 from darwin.exceptions import MaxFitnessReached
+from darwin.selection import NFittestSelection
 
 logger = logging.getLogger(__name__)
+
+IndividualFitness = namedtuple("IndividualFitness",
+                               ["individual", "fitness"])
 
 
 def stop_on_fitness_wrapper(stop_on_fitness):
@@ -15,7 +21,6 @@ def stop_on_fitness_wrapper(stop_on_fitness):
     `stop_on_fitness` was reached"""
 
     def decorator(fn):
-
         @wraps(fn)
         def fitness_wrapper(genome, *args, **kwargs):
             result = fn(genome, *args, **kwargs)
@@ -33,6 +38,7 @@ def stop_on_fitness_wrapper(stop_on_fitness):
 class Environment(object):
 
     def __init__(self, fitness_function, mutator, stop_on_fitness=None,
+                 selection_strategy=None, keep_n_fittest=None,
                  n_jobs=None, copy_fn=deepcopy, map_fn=None):
         """
         :param fitness_function: callable taking a genome object and returning a
@@ -56,6 +62,16 @@ class Environment(object):
         self.map_fn = map_fn or map
         self._fitness_cache = {}
 
+        if selection_strategy is not None:
+            if keep_n_fittest is not None:
+                warn("`keep_n_fittest` is ignored if `selection_strategy` is "
+                     "given")
+
+            self.selection_strategy = selection_strategy
+        else:
+            keep_n_fittest = keep_n_fittest or 10
+            self.selection_strategy = NFittestSelection(keep_n_fittest)
+
         if n_jobs is not None and map_fn is not None:
             raise ValueError("Parameter `n_jobs` is not allowed when `map_fn` "
                              "is set.")
@@ -64,94 +80,76 @@ class Environment(object):
             self.process_pool = multiprocessing.Pool(n_procs)
             self.map_fn = self.process_pool.map
 
-    def remove_unfit(self, population, keep):
-        """Return a new population containing the fittest `keep_ratio` of the given
-        population.
-
-        Even though the population is a new iterable, the individuals are the same
-        objects as in `population`.
-        """
-        fitnesses = self.fitness_by_individual(population)
-        population = sorted(population,
-                            key=lambda x: fitnesses[x],
-                            reverse=True)
-
-        return population[:keep]
-
     def upsize_population(self, population, n=100):
-        """Return a new population of size `n` based on the individuals in
-        `population`.
+        """Return a complete new population of size `n` based on the individuals
+        in `population`.
         """
+        population = [self.copy_fn(x) for x in population]
         pop_size = len(population)
 
         if pop_size >= n:
             return population
 
         return population + [self.copy_fn(x) for x in
-                             random.choices(population, k=n-pop_size)]
+                             random.choices(population, k=n - pop_size)]
 
-    def fitness_by_individual(self, population):
-        if not self._fitness_cache:
-            fitnesses = self.map_fn(self.fitness_function, population)
-            self._fitness_cache = {
-                individual: fitness
-                for individual, fitness
-                in zip(population, fitnesses)
-            }
+    def evaluate_population(self, population):
+        fitnesses = self.map_fn(self.fitness_function, population)
 
-        return self._fitness_cache
+        return [
+            IndividualFitness(individual, fitness)
+            for individual, fitness
+            in zip(population, fitnesses)
+        ]
 
-    def mean_fitness(self, population):
-        fitnesses = self.fitness_by_individual(population)
-        return mean(fitnesses.values())
-
-    def execute_callbacks(self, population, callbacks):
+    def execute_callbacks(self, evaluated_population, callbacks):
         if callbacks and callable(callbacks):
-            callbacks(population)
+            callbacks(evaluated_population)
         elif callbacks:
             for callback in callbacks:
-                callback(population)
+                callback(evaluated_population)
 
-    def evolve(self, population, keep_ratio=.2, n_generations=1,
-               population_size=100, generation_callback=None, copy=True):
+    def evolve(self, population, n_generations=1, population_size=100,
+               generation_callback=None):
         """
 
         :param population:
-        :param keep_ratio:
         :param n_generations:
         :param population_size:
         :param generation_callback: a callback or a list of callbacks taking the
         population
-        :param copy: ensure the given population is copied and not altered
-        in-place
-        :return:
+        :return: new population
         """
-        if copy:
-            population = [self.copy_fn(genome) for genome in population]
-
+        # new generation
         population = self.upsize_population(population, population_size)
-        self.execute_callbacks(population, generation_callback)
+        # evaluation
+        evaluated_population = self.evaluate_population(population)
 
-        msg = "Start: Mean fitness of top {:.2f} percent: {:f}"
-        msg = msg.format(keep_ratio * 100, self.mean_fitness(population))
-        logger.info(msg)
+        mean_fitness = mean([fitness
+                             for _, fitness
+                             in evaluated_population])
+        logger.info("[Start] Mean fitness: {:f}".format(mean_fitness))
 
-        for generation in range(n_generations):
-            keep_n_fittest = int(keep_ratio * population_size) or 1
-            population = self.remove_unfit(population, keep=keep_n_fittest)
+        self.execute_callbacks(evaluated_population, generation_callback)
+
+        for gen in range(n_generations):
+            # selection
+            population = self.selection_strategy.select(evaluated_population)
             population = self.upsize_population(population, population_size)
 
+            # reproduction / mutation / new generation
             self.mutator(population)
 
-            msg = "Gen #{:d}: Mean fitness of top {:.2f} %: {:f}"
-            msg = msg.format(generation, keep_ratio * 100,
-                             self.mean_fitness(population))
-            logger.info(msg)
+            # evaluation
+            evaluated_population = self.evaluate_population(population)
 
-            self.execute_callbacks(population, generation_callback)
-            self.clear_fitness_cache()
+            mean_fitness = mean([fitness
+                                 for _, fitness
+                                 in evaluated_population])
+
+            logger.info("[Gen #{:d}] Mean fitness: {:f}".format(
+                gen, mean_fitness))
+
+            self.execute_callbacks(evaluated_population, generation_callback)
 
         return population
-
-    def clear_fitness_cache(self):
-        self._fitness_cache = {}

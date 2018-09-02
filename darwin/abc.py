@@ -1,7 +1,7 @@
 import abc
 import itertools
 import collections
-from typing import Iterable
+from typing import Iterable, Tuple, List
 
 
 class BaseMutator(abc.ABC):
@@ -34,3 +34,13 @@ class BaseCombiner(BaseMutator):
     @abc.abstractmethod
     def combine(self, parents):
         """Combine parents and return one or more children"""
+
+
+class BaseSelectionStrategy(abc.ABC):
+    """Base for selection strategies."""
+
+    @abc.abstractmethod
+    def select(self, evaluated_population: Iterable[Tuple[object, float]]) -> \
+            List:
+        """Select the evaluated population for individuals used in the next
+        generation."""
