@@ -88,7 +88,10 @@ class Environment(object):
         pop_size = len(population)
 
         if pop_size >= n:
-            return population
+            msg = "Population has grown greater than {:d}. truncating..."
+            warn(msg.format(n))
+            random.shuffle(population)
+            return population[:n]
 
         return population + [self.copy_fn(x) for x in
                              random.choices(population, k=n - pop_size)]
@@ -136,7 +139,6 @@ class Environment(object):
             # selection
             population = self.selection_strategy.select(evaluated_population)
             population = self.upsize_population(population, population_size)
-
             # reproduction / mutation / new generation
             self.mutator(population)
 
