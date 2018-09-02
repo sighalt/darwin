@@ -4,7 +4,7 @@ import collections
 from typing import Iterable
 
 
-class BaseMutator(object):
+class BaseMutator(abc.ABC):
 
     @abc.abstractmethod
     def __call__(self, population):
