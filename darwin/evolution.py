@@ -60,7 +60,6 @@ class Environment(object):
         self.mutator = mutator
         self.copy_fn = copy_fn
         self.map_fn = map_fn or map
-        self._fitness_cache = {}
 
         if selection_strategy is not None:
             if keep_n_fittest is not None:
