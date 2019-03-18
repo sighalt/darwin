@@ -7,6 +7,7 @@ from statistics import mean
 from collections import namedtuple
 from warnings import warn
 
+from darwin.abc import BaseMutationStrategy, BaseRecombinationStrategy
 from darwin.exceptions import MaxFitnessReached
 from darwin.selection import NFittestSelection
 
@@ -37,7 +38,10 @@ def stop_on_fitness_wrapper(stop_on_fitness):
 
 class Environment(object):
 
-    def __init__(self, fitness_function, mutator, stop_on_fitness=None,
+    def __init__(self, fitness_function,
+                 mutation_strategy: BaseMutationStrategy,
+                 recombination_strategy: BaseRecombinationStrategy = None,
+                 stop_on_fitness=None,
                  selection_strategy=None, keep_n_fittest=None,
                  n_jobs=None, copy_fn=deepcopy, map_fn=None):
         """
@@ -57,7 +61,8 @@ class Environment(object):
             fitness_function = decorator(fitness_function)
 
         self.fitness_function = fitness_function
-        self.mutator = mutator
+        self.mutation_strategy = mutation_strategy
+        self.recombination_strategy = recombination_strategy
         self.copy_fn = copy_fn
         self.map_fn = map_fn or map
 
@@ -86,7 +91,7 @@ class Environment(object):
         population = [self.copy_fn(x) for x in population]
         pop_size = len(population)
 
-        if pop_size >= n:
+        if pop_size > n:
             msg = "Population has grown greater than {:d}. truncating..."
             warn(msg.format(n))
             random.shuffle(population)
@@ -112,7 +117,7 @@ class Environment(object):
                 callback(evaluated_population)
 
     def evolve(self, population, n_generations=1, population_size=100,
-               generation_callback=None):
+               generation_callback=None, keep_parents=False):
         """
 
         :param population:
@@ -120,6 +125,7 @@ class Environment(object):
         :param population_size:
         :param generation_callback: a callback or a list of callbacks taking the
         population
+        :param keep_parents:
         :return: new population
         """
         # new generation
@@ -138,8 +144,17 @@ class Environment(object):
             # selection
             population = self.selection_strategy.select(evaluated_population)
             population = self.upsize_population(population, population_size)
-            # reproduction / mutation / new generation
-            self.mutator(population)
+
+            if self.recombination_strategy:
+                offspring = self.recombination_strategy.get_offspring(
+                    population)
+
+                if keep_parents:
+                    population.extend(offspring)
+                else:
+                    population = list(offspring)
+
+            self.mutation_strategy.mutate(population)
 
             # evaluation
             evaluated_population = self.evaluate_population(population)

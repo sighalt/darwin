@@ -1,7 +1,7 @@
 import time
 import random
 from darwin import Environment
-from darwin.mutators import IndividualMutator
+from darwin.mutation import WeightedMutationStrategy
 
 
 class Gene(object):
@@ -34,8 +34,8 @@ def optimized_copy(obj):
     return Genome([Gene(gene.value) for gene in obj.genes])
 
 
-mutator = IndividualMutator(mutate_genome)
-env = Environment(fitness, mutator, n_jobs=-1, copy_fn=optimized_copy)
+mutation_strategy = WeightedMutationStrategy({mutate_genome: 1})
+env = Environment(fitness, mutation_strategy, n_jobs=-1, copy_fn=optimized_copy)
 first_individual = Genome(genes=[Gene()])
 population = [first_individual]
 

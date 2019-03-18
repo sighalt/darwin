@@ -1,8 +1,9 @@
 import random
 from darwin import Environment
-from darwin.mutators import RandomChunkMutator, IndividualMutator, SimpleCombiner
+from darwin.mutation import WeightedMutationStrategy
 from typing import List
 
+from darwin.recombination import RandomRecombinationStrategy
 from darwin.selection import TournamentSelection
 
 
@@ -43,13 +44,11 @@ def fitness(genome):
     )
 
 
-# combine 40% and mutate 50% of the population
-mutator = RandomChunkMutator({
-    SimpleCombiner(combine_genes): 0.4,
-    IndividualMutator(mutate_gene): 0.5
-})
+mutation_strategy = WeightedMutationStrategy({mutate_gene: 1})
+recombination_strategy = RandomRecombinationStrategy(combine_genes, 101)
 
-env = Environment(fitness, mutator, selection_strategy=TournamentSelection(25))
+env = Environment(fitness, mutation_strategy, recombination_strategy,
+                  selection_strategy=TournamentSelection(25))
 first_individual = Genome(genes=[Gene()])
 population = [first_individual]
 
