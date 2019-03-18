@@ -162,9 +162,12 @@ class Environment(object):
             mean_fitness = mean([fitness
                                  for _, fitness
                                  in evaluated_population])
+            max_fitness = max([fitness
+                                 for _, fitness
+                                 in evaluated_population])
 
-            logger.info("[Gen #{:d}] Mean fitness: {:f}".format(
-                gen, mean_fitness))
+            logger.info("[Gen #{:d}] Mean fitness: {:.5f}; Max fitness: "
+                        "{:.5f}".format(gen, mean_fitness, max_fitness))
 
             self.execute_callbacks(evaluated_population, generation_callback)
 
