@@ -1,6 +1,6 @@
 import random
 from darwin import Environment
-from darwin.mutators import RandomChunkStrategy, SimpleMutator, SimpleCombiner
+from darwin.mutators import RandomChunkMutator, IndividualMutator, SimpleCombiner
 from typing import List
 
 from darwin.selection import TournamentSelection
@@ -44,9 +44,9 @@ def fitness(genome):
 
 
 # combine 40% and mutate 50% of the population
-mutator = RandomChunkStrategy({
+mutator = RandomChunkMutator({
     SimpleCombiner(combine_genes): 0.4,
-    SimpleMutator(mutate_gene): 0.5
+    IndividualMutator(mutate_gene): 0.5
 })
 
 env = Environment(fitness, mutator, selection_strategy=TournamentSelection(25))

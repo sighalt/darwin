@@ -8,7 +8,7 @@ from darwin.abc import BaseMutator, BaseCombiner
 from darwin.utils import HistoryList
 
 
-class SimpleMutator(BaseMutator):
+class IndividualMutator(BaseMutator):
 
     def __init__(self, individual_mutator):
         """
@@ -21,7 +21,7 @@ class SimpleMutator(BaseMutator):
             self.individual_mutator(individual)
 
 
-class RandomChunkStrategy(BaseMutator):
+class RandomChunkMutator(BaseMutator):
 
     def __init__(self, mutators):
         """
@@ -49,6 +49,7 @@ class RandomChunkStrategy(BaseMutator):
 
 
 class SimpleCombiner(BaseCombiner):
+
     def __init__(self, combiner, keep_parents=False, n_parents=2):
         self.KEEP_PARENTS = keep_parents
         self.N_PARENTS = n_parents

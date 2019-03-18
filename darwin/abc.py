@@ -15,7 +15,7 @@ class BaseCombiner(BaseMutator):
     N_PARENTS = 2
     KEEP_PARENTS = False
 
-    def __call__(self, population: Iterable):
+    def __call__(self, population: List):
         combined_children = list()
 
         for parents in itertools.combinations(population, self.N_PARENTS):
